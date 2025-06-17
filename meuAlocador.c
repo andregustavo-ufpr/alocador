@@ -31,12 +31,19 @@ void* alocaMem(int num_bytes) {
     Bloco* atual = inicioLista;
 
     // 1. Procurar bloco livre com tamanho suficiente
+    Bloco* menor = NULL;
     while (atual) {
         if (atual->livre && atual->tamanho >= num_bytes) {
-            atual->livre = 0;
-            return (void*)(atual + 1);
+            if(!menor || atual->tamanho < menor->tamanho){
+                menor = atual;
+            }
         }
         atual = atual->prox;
+    }
+
+    if(menor){
+        menor->livre = 0;
+        return (void*)(menor + 1);
     }
 
     // 2. Não encontrou, alocar novo bloco no fim da heap
@@ -80,11 +87,11 @@ void imprimeMapa() {
     while (atual) {
         // Parte gerencial (estrutura Bloco)
         for (size_t i = 0; i < sizeof(Bloco); i++) {
-            putchar('#');
+            putchar(atual->livre ? '-' : '#');
         }
 
         // Parte de dados (livre ou ocupada)
-        char c = atual->livre ? '-' : '+';
+        char c = atual->livre ? '-' : '*';
         for (int i = 0; i < atual->tamanho; i++) {
             putchar(c);
         }
@@ -95,3 +102,21 @@ void imprimeMapa() {
     putchar('\n');
 }
 
+int main (long int argc, char** argv) {
+  void *a, *b;
+
+  iniciaAlocador();               // Impressão esperada
+  imprimeMapa();                  // <vazio>
+
+  a = (void *) alocaMem(10);
+  imprimeMapa();                  // ################**********
+  b = (void *) alocaMem(4);
+  imprimeMapa();                  // ################**********##############****
+  liberaMem(a);
+  imprimeMapa();                  // ################----------##############****
+  liberaMem(b);
+  imprimeMapa();                   // ################----------------------------
+                                  // ou
+                                  // <vazio>
+  finalizaAlocador();
+}
